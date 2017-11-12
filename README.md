@@ -1,10 +1,10 @@
-This demo compares dom insertion count when vue and inferno patch vnode's children.
+This demo compares dom insertion count when vue and inferno patches vnode's children.
 
 ## Libraries
 
 Vue2.5.3, Inferno3.0, G2.3.13
 
-## Modify
+## Modification
 
 **Vue**:
 
