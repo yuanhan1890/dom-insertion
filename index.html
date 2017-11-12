@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body style="word-wrap: break-word">
+    <div id="inferno"></div>
+    <div id="vue">
+        <span v-for="i in arr" :key="i.key">{{i.val}},</span>
+    </div>
+    <script src="./inferno.js"></script>
+    <script src="./inferno-hyperscript.js"></script>
+    <script src="./vue.js"></script>
+    <script src="./g2.js"></script>
+    <script>
+        const h = Inferno.h
+
+        Vue.count = 0
+        Inferno.count = 0
+
+        function render(arr) {
+            Inferno.render(h('div', {}, arr.map((index) => {
+            return h('span', { key: index}, `${index},`)
+        })), document.getElementById('inferno'))
+        }
+
+        render([])
+
+        const vm = new Vue({
+            el: '#vue',
+            data () {
+                return {
+                    arr: []
+                }
+            },
+            methods: {
+                rerender(arr) {
+                    arr.forEach((i, index) => {
+                        this.arr[index].key = i
+                        this.arr[index].val = i
+                    })
+                },
+                init (arr) {
+                    this.arr = arr.map(i => {
+                        return {
+                            key: i,
+                            val: i
+                        }
+                    })
+                }
+            }
+        })
+
+        var test = [10,100,200,400,800,1000,2000,4000,8000,10000]
+        const result = {}
+        function rerender () {
+            let len
+            if (test.length > 0) {
+                len = test.shift()
+            } else {
+                paintResult()
+                return
+            }
+
+            const arr = initTest(len)
+
+            vm.$nextTick(() => {
+                Vue.count = 0
+                Inferno.count = 0
+
+                arr.sort(() => Math.random() < 0.5)
+                vm.rerender(arr.slice(0))
+                render(arr.slice(0))
+
+                vm.$nextTick(() => {
+                    result[len] = {
+                        Vue: Vue.count,
+                        Inferno: Inferno.count
+                    }
+                    rerender()
+                })
+            })
+        }
+
+        rerender()
+
+        function initTest(len) {
+            Inferno.inCounting = false
+            Vue.inCounting = false
+            const arr = genArray(len)
+            vm.init(arr)
+            render(arr.slice(0))
+            Inferno.inCounting = true
+            Vue.inCounting = true
+
+            return arr
+        }
+
+        function genArray (len) {
+            return Array.apply(null, {length: len}).map((i, index) => {
+                return index + 1
+            })
+        }
+
+        function paintResult() {
+            vm.$destroy()
+            document.body.removeChild(document.getElementById('inferno'))
+            document.body.removeChild(document.getElementById('vue'))
+
+            var canvas = document.createElement('div')
+            document.body.appendChild(canvas)
+
+            canvas.id = 'canvas'
+
+            var chart = new G2.Chart({
+                id: 'canvas',
+                width : 1000,
+                height : 400,
+                forceFit: true,
+            });
+
+            var data = Object.keys(result).reduce((ret, key) => {
+                var x = Math.log10(parseInt(key))
+                ret.push({ length: x, count: Math.log10(result[key].Vue), type: 'Vue'})
+                ret.push({ length: x, count: Math.log10(result[key].Inferno), type: 'Inferno'})
+                return ret
+            }, [])
+
+            chart.source(data, {
+                length: {
+                    alias: 'log10(the length of children)',
+                },
+                count: {
+                    alias: 'log10(insertion count)'
+                },
+                type:{
+                    type:'cat'
+                }
+            });
+            chart.line().position('length*count').color('type',['#ff7f0e','#2ca02c']).shape('smooth').size(2);
+            chart.render();
+
+            var canvas_nolog = document.createElement('div')
+            document.body.appendChild(canvas_nolog)
+
+            canvas.id = 'canvas_nolog'
+
+            var chart_nolog = new G2.Chart({
+                id: 'canvas_nolog',
+                width : 1000,
+                height : 400,
+                forceFit: true,
+            });
+
+            var data_nolog = Object.keys(result).reduce((ret, key) => {
+                var x = parseInt(key)
+                ret.push({ length: x, count: result[key].Vue, type: 'Vue'})
+                ret.push({ length: x, count: result[key].Inferno, type: 'Inferno'})
+                return ret
+            }, [])
+
+            chart_nolog.source(data_nolog, {
+                length: {
+                    alias: 'the length of children',
+                },
+                count: {
+                    alias: 'insertion count'
+                },
+                type:{
+                    type:'cat'
+                }
+            });
+            chart_nolog.line().position('length*count').color('type',['#ff7f0e','#2ca02c']).shape('smooth').size(2);
+            chart_nolog.render();
+
+            var result_log = document.createElement('div')
+            document.body.appendChild(result_log)
+
+            Object.keys(result).map(key => {
+                return `${key}: Vue.count = ${result[key].Vue}; Inferno.count = ${result[key].Inferno}`
+            }).forEach((line) => {
+                const lineEl = document.createElement('div')
+                lineEl.textContent = line
+                result_log.appendChild(lineEl)
+            })
+        }
+        
+    </script>
+</body>
+</html>
