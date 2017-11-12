@@ -36,4 +36,4 @@ if (Inferno.inCounting && parentDom.childNodes[0] && !Number.isNaN(parseInt(pare
 
 ## screenshot
 
-![result result](https://raw.githubusercontent.com/yuanhan1890/dom-insertion/master/screenshot.png)
+![result result](https://github.com/yuanhan1890/dom-insertion/blob/master/screenshot.png)
